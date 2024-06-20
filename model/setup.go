@@ -19,7 +19,6 @@ func ConnectDataBase() {
 		log.Fatalf("Error loading .env file")
 	}
 
-	// driver := os.Getenv("DB_DRIVER")
 	dbUser := os.Getenv("DB_USER")
 	dbPass := os.Getenv("DB_PASS")
 	dbName := os.Getenv("DB_NAME")
