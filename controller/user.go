@@ -8,8 +8,8 @@ import (
 )
 
 type RegisterUserInput struct {
-	Username string `json:"username" binding:"required"`
-	Email    string `json:"email" binding:"required"`
+	Username string `gorm:"notnull" json:"username" binding:"required"`
+	Email    string `gorm:"unique;notnull" json:"email" binding:"required"`
 }
 
 func RegisterUser(c *gin.Context) {
@@ -25,7 +25,7 @@ func RegisterUser(c *gin.Context) {
 
 	models.DB.Create(&user)
 
-	c.JSON(200, gin.H{
+	c.JSON(http.StatusOK, gin.H{
 		"created_user": user,
 	})
 }
