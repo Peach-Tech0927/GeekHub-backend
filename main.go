@@ -26,7 +26,9 @@ func main() {
 
 	user := router.Group("/user")
 	{
-		user.POST("/register", controller.RegisterUser)
+		user.POST("", controller.RegisterUser)
+		user.GET("", controller.GetUserInfo)
+		user.POST("/re", controller.ReGenerateToken)
 	}
 
 	router.Run(":8080")
