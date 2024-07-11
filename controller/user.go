@@ -20,19 +20,16 @@ func RegisterUser(c *gin.Context) {
 		return
 	}
 
-	// emailが使われている(err == nil)ときにエラーを返す
-	var existingUser models.User
-	if err := models.DB.Where("email = ?", input.Email).First(&existingUser).Error; err == nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Email is already in use"})
-		return
-	}
-
 	var user models.User
 	user.Username = input.Username
 	user.Email = input.Email
 
-	if err := models.DB.Create(&user).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	if err := user.Create(); err != nil {
+		if err == models.ErrEmailInUse {
+			c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
+		}
 		return
 	}
 
@@ -53,31 +50,39 @@ func GetUserInfo(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
 	}
-
-	var user models.User
-	if err := models.DB.Where("ID = ?", userId).First(&user).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+	
+	user, err := models.GetUserInfoById(userId)
+	if err != nil {
+		if err == models.ErrFailedToGetUserInfo {
+			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": models.ErrUnexpected.Error()})
+		}
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{"user": user})
 }
 
-type ReGenerateTokenInput struct {
+type SignInInput struct {
 	Username string `json:"username" binding:"required"`
 	Email    string `json:"email" binding:"required"`
 }
 
-func ReGenerateToken(c *gin.Context) {
-	var input ReGenerateTokenInput
+func SignIn(c *gin.Context) {
+	var input SignInInput
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-
-	var user models.User
-	if err := models.DB.Where("email = ?", input.Email).First(&user).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+	
+	user, err := models.IdentifyUserByEmail(input.Email)
+	if err != nil {
+		if err == models.ErrFailedToGetUserInfo {
+			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": models.ErrUnexpected.Error()})
+		}
 		return
 	}
 
