@@ -63,13 +63,13 @@ func GetUserInfo(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"user": user})
 }
 
-type ReGenerateTokenInput struct {
+type SignInInput struct {
 	Username string `json:"username" binding:"required"`
 	Email    string `json:"email" binding:"required"`
 }
 
-func ReGenerateToken(c *gin.Context) {
-	var input ReGenerateTokenInput
+func SignIn(c *gin.Context) {
+	var input SignInInput
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
