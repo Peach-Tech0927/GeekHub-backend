@@ -39,3 +39,12 @@ func GetUserInfoById(id uint) (*User, error) {
 
 	return &user, nil
 }
+
+func IdentifyUserByEmail(email string) (*User, error) {
+	var user User
+	if err := DB.Where("email = ?", email).First(&user).Error; err != nil {
+		return nil, ErrFailedToGetUserInfo
+	}
+
+	return &user, nil
+}
