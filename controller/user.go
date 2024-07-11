@@ -20,19 +20,16 @@ func RegisterUser(c *gin.Context) {
 		return
 	}
 
-	// emailが使われている(err == nil)ときにエラーを返す
-	var existingUser models.User
-	if err := models.DB.Where("email = ?", input.Email).First(&existingUser).Error; err == nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Email is already in use"})
-		return
-	}
-
 	var user models.User
 	user.Username = input.Username
 	user.Email = input.Email
 
-	if err := models.DB.Create(&user).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	if err := user.Create(); err != nil {
+		if err == models.ErrEmailInUse {
+			c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
+		}
 		return
 	}
 
