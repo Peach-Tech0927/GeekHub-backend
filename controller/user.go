@@ -50,10 +50,14 @@ func GetUserInfo(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
 	}
-
-	var user models.User
-	if err := models.DB.Where("ID = ?", userId).First(&user).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+	
+	user, err := models.GetUserInfoById(userId)
+	if err != nil {
+		if err == models.ErrFailedToGetUserInfo {
+			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": models.ErrUnexpected.Error()})
+		}
 		return
 	}
 
